@@ -3,12 +3,6 @@ import pandas as pd
 import sqlite3
 from langchain.tools import tool
 
-
-conn = sqlite3.connect("finance.db")
-
-bills = pd.read_sql_query("SELECT * FROM bills", conn)
-
-
 @tool
 def bill_tool(query:str) -> str:
     """"REQUIRED TOOL.
@@ -23,9 +17,12 @@ def bill_tool(query:str) -> str:
     Returns real bill data from CSV.
     """
     try:
+        with sqlite3.connect("finance.db") as conn:
+            bills = pd.read_sql_query("SELECT * FROM bills", conn)
 
         bills['Amount'] = pd.to_numeric(bills['Amount'],errors='coerce')
         bills['Due Date'] = pd.to_datetime(bills['Due Date'],errors='coerce')
+
         today = datetime.datetime.now()
         q = query.lower()
 
@@ -45,7 +42,11 @@ def bill_tool(query:str) -> str:
             return f"Upcoming bills in the next week: {result.to_string(index=False)}"
         
         elif "month" in q:
-            result = bills[bills['Due Date'].dt.month == today.month]
+            result = bills[
+                (bills["Due Date"].dt.month == today.month) &
+                (bills["Due Date"].dt.year == today.year)
+            ]
+
             return f"Upcoming bills in the current month: {result.to_string(index=False)}"
         else:
             return "Query not understood..Specify 'paid bills', 'unpaid bills', 'bills due this week' or 'bills due this month'"

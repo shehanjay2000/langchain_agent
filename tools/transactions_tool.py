@@ -2,10 +2,6 @@ import pandas as pd
 import sqlite3
 from langchain.tools import tool
 
-conn = sqlite3.connect("finance.db")
-
-transactions = pd.read_sql_query("SELECT * FROM transactions", conn)
-
 @tool
 def transactions_analyzer(query: str) -> str:
     """Analyze transactions, categorize spending, and summarize expenses.
@@ -17,6 +13,9 @@ def transactions_analyzer(query: str) -> str:
         Total amount spend on each category 
     """
     try:
+        with sqlite3.connect("finance.db") as conn:
+            transactions = pd.read_sql_query("SELECT * FROM transactions", conn)
+
         transactions['Amount'] = pd.to_numeric(transactions['Amount'], errors='coerce')
 
         # category mapping

@@ -3,9 +3,6 @@ import datetime
 import sqlite3
 from langchain.tools import tool
 
-conn = sqlite3.connect("finance.db")
-income = pd.read_sql_query("SELECT * FROM income", conn)
-
 @tool
 def income_tool(query:str) -> str:
     """Check income totals, salary, sources and earnings
@@ -20,6 +17,8 @@ def income_tool(query:str) -> str:
         income summary, totals, or breakdown
     """
     try:
+        with sqlite3.connect("finance.db") as conn:
+            income = pd.read_sql_query("SELECT * FROM income", conn)
         
         today = datetime.datetime.now()
         q = query.lower()
